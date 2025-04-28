@@ -65,7 +65,10 @@ const Table: React.FC = () => {
       </table>
 
       <div className="table-bottom">
-        <button onClick={userService.deleteSelected}>Delete Selected</button>
+        <button 
+         className="delete-btn"
+        onClick={userService.deleteSelected} 
+        >Delete Selected</button>
         <Pagination
           total={filteredUsers.length}
           currentPage={currentPage}
