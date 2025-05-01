@@ -1,11 +1,16 @@
-import Table from './components/Table/Table';
+import React, { useEffect } from "react";
+import UserTable from "./components/UserTable";
+import { useAppDispatch } from "./store/hooks";
+import { fetchUsers } from "./store/userSlice";
 
-function App() {
-  return (
-    <div>
-      <Table />
-    </div>
-  );
-}
+const App = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, []);
+
+  return <UserTable />;
+};
 
 export default App;
