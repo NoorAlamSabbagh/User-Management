@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers, editUser, deleteUser, deleteMultipleUsers, deleteSelected } from '../store/userSlice';
+import { fetchUsers, editUser, deleteUser, deleteMultipleUsers } from '../store/userSlice';
 import '../App.css';
 import { TbEdit } from 'react-icons/tb';
 import { FiTrash } from 'react-icons/fi';
@@ -22,21 +22,41 @@ const UserTable: React.FC = () => {
   }, [dispatch]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value.toLowerCase());
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = users
+  .filter((user) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
-  
-    const name = user.name?.toString().toLowerCase() || '';
-    const email = user.email?.toString().toLowerCase() || '';
-    const role = user.role?.toString().toLowerCase() || '';
-  
-    return name.includes(term) || email.includes(term) || role.includes(term);
+
+    const name = user.name?.toLowerCase() || '';
+    const email = user.email?.toLowerCase() || '';
+    const role = user.role?.toLowerCase() || '';
+
+    return (
+      name.includes(term) ||
+      email.includes(term) ||
+      role.includes(term)
+    );
+  })
+  .sort((a, b) => {
+    const term = searchTerm.trim().toLowerCase();
+
+    const aName = a.name?.toLowerCase() || '';
+    const bName = b.name?.toLowerCase() || '';
+
+    // Put entries starting with the term at the top
+    const aStarts = aName.startsWith(term) ? -1 : 0;
+    const bStarts = bName.startsWith(term) ? -1 : 0;
+
+    if (aStarts !== bStarts) return aStarts - bStarts;
+
+    // Then sort by first index of occurrence
+    return aName.indexOf(term) - bName.indexOf(term);
   });
-  
+
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -47,9 +67,22 @@ const UserTable: React.FC = () => {
     setEditedUser({ name: user.name, email: user.email, role: user.role });
   };
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const handleSaveClick = () => {
-    if (editedUser.name?.length < 3 || editedUser.email?.length < 3 || editedUser.role?.length < 3) {
-      alert('Name, Email and Role must be at least 3 characters long.');
+    if (editedUser.name?.length < 3) {
+      alert('Name must be at least 3 characters.');
+      return;
+    }
+    if (editedUser.email?.length < 3) {
+      alert('Email must be at least 3 characters.');
+      return;
+    }
+    if (!emailRegex.test(editedUser.email)) {
+      alert('Invalid email format.');
+      return;
+    }
+    if (editedUser.role?.length < 3) {
+      alert('Role must be at least 3 characters.');
       return;
     }
     if (editRowId) {
@@ -72,6 +105,7 @@ const UserTable: React.FC = () => {
 
   const handleSelectAll = () => {
     const currentPageIds = paginatedUsers.map((user) => user.id);
+    console.log("currentPageIds", currentPageIds);
     const allSelected = currentPageIds.every((id) => selectedRows.includes(id));
     if (allSelected) {
       setSelectedRows((prev) => prev.filter((id) => !currentPageIds.includes(id)));

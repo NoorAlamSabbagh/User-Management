@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import UserTable from "./components/UserTable";
 import { useAppDispatch } from "./store/hooks";
 import { fetchUsers } from "./store/userSlice";

@@ -4,12 +4,16 @@ import { User } from "../types/user";
 
 interface UserState {
     users: User[];
+    error:any;
+    loading:any;
     filteredUsers: User[];
     selectedIds: string[];
 }
 
 const initialState: UserState = {
     users: [],
+    error:[],
+    loading:[],
     filteredUsers: [],
     selectedIds: [],
 };
@@ -30,13 +34,6 @@ const userSlice = createSlice({
             if (index !== -1) state.users[index] = action.payload;
             state.filteredUsers = [...state.users];
         },
-        updateUser: (state, action) => {
-            const { id, updatedData } = action.payload;
-            const index = state.users.findIndex(user => user.id === id);
-            if (index !== -1) {
-                state.users[index] = { ...state.users[index], ...updatedData };
-            }
-        },
 
         deleteMultipleUsers: (state, action) => {
             state.users = state.users.filter(user => !action.payload.includes(user.id));
@@ -45,42 +42,32 @@ const userSlice = createSlice({
             state.users = state.users.filter(u => u.id !== action.payload);
             state.filteredUsers = [...state.users];
         },
-        deleteSelected: (state) => {
-            state.users = state.users.filter(u => !state.selectedIds.includes(u.id));
-            state.filteredUsers = [...state.users];
-            state.selectedIds = [];
-        },
-        setFilteredUsers: (state, action: PayloadAction<User[]>) => {
-            state.filteredUsers = action.payload;
-        },
-        toggleSelect: (state, action: PayloadAction<string>) => {
-            if (state.selectedIds.includes(action.payload)) {
-                state.selectedIds = state.selectedIds.filter(id => id !== action.payload);
-            } else {
-                state.selectedIds.push(action.payload);
-            }
-        },
-        selectAll: (state, action: PayloadAction<string[]>) => {
-            state.selectedIds = action.payload;
-        }
     },
+
     extraReducers: builder => {
-        builder.addCase(fetchUsers.fulfilled, (state, action) => {
-            state.users = action.payload;
-            state.filteredUsers = action.payload;
-        });
+ builder
+  .addCase(fetchUsers.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+  })
+  .addCase(fetchUsers.fulfilled, (state, action) => {
+    state.loading = false;
+    state.users = action.payload;
+    state.filteredUsers = action.payload;
+    state.error = null;
+  })
+  .addCase(fetchUsers.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.error.message || 'Failed to fetch users';
+  });
+
     },
 });
 
 export const {
     editUser,
     deleteUser,
-    deleteSelected,
-    setFilteredUsers,
-    toggleSelect,
-    selectAll,
     deleteMultipleUsers,
-    updateUser
 } = userSlice.actions;
 
 export default userSlice.reducer;
